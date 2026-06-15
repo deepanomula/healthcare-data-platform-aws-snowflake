@@ -67,7 +67,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
           
-          # 💡 Native provider environment variables automatically correct legacy regional endpoints
+          SNOWFLAKE_ORGANIZATION_NAME: "aws"
           SNOWFLAKE_ACCOUNT_NAME: "pr96137"
           SNOWFLAKE_HOST: "pr96137.us-east-2.aws.snowflakecomputing.com"
           SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
