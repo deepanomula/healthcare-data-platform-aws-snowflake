@@ -29,3 +29,15 @@ provider "aws" {
 provider "snowflake" {
   # These will be supplied securely by your GitHub Actions runner secrets
 }
+
+# 1. Map incoming environment variables to explicit inputs
+variable "snowflake_account" { type = string }
+variable "snowflake_user"    { type = string }
+variable "snowflake_password"{ type = string }
+
+# 2. Feed the variables directly into the provider config
+provider "snowflake" {
+  account  = var.snowflake_account
+  user     = var.snowflake_user
+  password = var.snowflake_password
+}
