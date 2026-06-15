@@ -1,3 +1,11 @@
+terraform {
+  backend "s3" {
+    bucket       = "university-vitals-tf-state-bucket"
+    key          = "healthcare-pipeline/terraform.tfstate"
+    region       = "us-east-1"
+    use_lockfile = true # Uses native S3 locking, completely bypassing DynamoDB!
+  }
+}
 # ==========================================
 # 1. S3 STORAGE TIERS (Bronze & Silver)
 # ==========================================

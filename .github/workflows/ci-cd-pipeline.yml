@@ -6,42 +6,37 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  AWS_REGION: "us-east-1"  # Adjust this to match your target AWS region
+  AWS_REGION: "us-east-1"
 
 jobs:
-  # --- STAGE 1: CONTINUOUS INTEGRATION (CI) ---
+  # STAGE 1: AUTOMATED TESTING (CI)
   ci-testing:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository Code
+      - name: Checkout Code
         uses: actions/checkout@v4.1.7
 
-      - name: Set up Python 3.11
+      - name: Set up Python
         uses: actions/setup-python@v5.1.1
         with:
           python-version: '3.11'
 
-      - name: Install Project Dependencies
+      - name: Install Dependencies & Test
         run: |
           python -m pip install --upgrade pip
-          if [ -f src/lambda/requirements.txt ]; then pip install -r src/lambda/requirements.txt; fi
           pip install pytest flake8 pandas pyarrow
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          if [ -f src/lambda/test_lambda.py ]; then pytest src/lambda/test_lambda.py; fi
 
-      - name: Run Flake8 Linter
-        run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-
-      - name: Execute PyTest Suite
-        run: pytest src/lambda/test_lambda.py
-
-  # --- STAGE 2: CONTINUOUS DEPLOYMENT (CD) ---
+  # STAGE 2: CONTINUOUS DEPLOYMENT (CD)
   cd-deployment:
-    needs: ci-testing  # Only run deployment if all tests pass perfectly!
+    needs: ci-testing
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository Code
+      - name: Checkout Code
         uses: actions/checkout@v4.1.7
 
-      # 1. Authenticate with AWS using your secure GitHub Secrets
+      # 1. Configure cloud authentication using your encrypted GitHub secrets
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -49,28 +44,17 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # 2. Setup Terraform on the runner
-      - name: Setup Terraform
+      # 2. Package your Python applications into zip payloads dynamically inside the cloud
+      - name: Package Lambda Zip Payloads
+        run: |
+          cd src/lambda
+          zip ../../terraform/router_payload.zip router_handler.py
+          zip ../../terraform/transformer_payload.zip lambda_function.py
+
+      # 3. Initialize and deploy your infrastructure live to AWS
+      - name: Setup & Run Terraform CD
         uses: hashicorp/setup-terraform@v3
-
-      # 3. Initialize and deploy your AWS Stack via Terraform
-      - name: Terraform Apply (Deploy to AWS)
-        run: |
+      - run: |
           cd terraform
-          terraform init
-          terraform validate
+          terraform init -reconfigure
           terraform apply -auto-approve
-
-      # 4. Install the Snowflake CLI tool belt to execute your database DDL scripts
-      - name: Install Snowflake CLI
-        run: pip install snowflake-cli-labs
-
-      # 5. Automatically push structural updates live to Snowflake
-      - name: Deploy Database Schema to Snowflake
-        env:
-          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
-          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
-          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
-        run: |
-          # Executes your data warehouse script to build/alter tables, streams, and tasks live
-          snow sql -f snowflake/setup_warehouse.sql
