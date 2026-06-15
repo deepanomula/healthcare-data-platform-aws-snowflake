@@ -23,18 +23,13 @@ provider "aws" {
   region = "us-east-1"
 }
 
-# 1. Add a specific host string input variable
-variable "snowflake_organization" { type = string }
-variable "snowflake_account_name"{ type = string }
-variable "snowflake_host"        { type = string } # 💡 Added this variable
-variable "snowflake_user"        { type = string }
-variable "snowflake_password"    { type = string }
+variable "snowflake_host"     { type = string }
+variable "snowflake_user"     { type = string }
+variable "snowflake_password" { type = string }
 
-# 2. Add the host direct mapping line to the provider schema
+# 2. Configure the unified single parameter provider
 provider "snowflake" {
-  organization_name = var.snowflake_organization
-  account_name      = var.snowflake_account_name
-  host              = var.snowflake_host        # 💡 Maps directly to your endpoint bypass
-  user              = var.snowflake_user
-  password          = var.snowflake_password
+  host     = var.snowflake_host
+  user     = var.snowflake_user
+  password = var.snowflake_password
 }
