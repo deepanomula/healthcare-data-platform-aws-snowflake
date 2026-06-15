@@ -67,7 +67,8 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
           
-          # 💡 Prefixing with TF_VAR_ forces Terraform to inject these straight into your variables block!
-          TF_VAR_snowflake_account: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          # 💡 Map the individual parts to feed the updated variables
+          TF_VAR_snowflake_organization: "aws" # or use a secret
+          TF_VAR_snowflake_account_name: "pr96137"     # or use a secret
           TF_VAR_snowflake_user: ${{ secrets.SNOWFLAKE_USER }}
           TF_VAR_snowflake_password: ${{ secrets.SNOWFLAKE_PASSWORD }}
