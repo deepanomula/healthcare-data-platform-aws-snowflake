@@ -1,0 +1,52 @@
+# ==========================================
+# 1. Terraform & Infrastructure Artifacts
+# ==========================================
+# Local directories containing downloaded providers and modules
+.terraform/
+
+# State files that track your real cloud infrastructure layout
+*.tfstate
+*.tfstate.*
+
+# Crash logs or execution trace logs
+crash.log
+*.tfvars
+*.tfvars.json
+
+# ==========================================
+# 2. Python & PySpark Caches
+# ==========================================
+# Byte-compiled / optimized Python bytecode chunks
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging files (prevents uploading your deployment .zip bundles)
+*.zip
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ==========================================
+# 3. Testing & Coverage Indicators
+# ==========================================
+# Local unit test caching databases
+.pytest_cache/
+.htmlcov/
+htmlcov/
+.coverage
+.cache
+
+# ==========================================
+# 4. Operating System Junk
+# ==========================================
+# macOS hidden metadata folders
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows thumbnail and folder setting caches
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
