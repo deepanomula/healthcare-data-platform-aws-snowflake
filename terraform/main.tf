@@ -73,9 +73,9 @@ resource "aws_lambda_function" "router_lambda" {
   }
 }
 
-# Connect SQS FIFO Queue directly as the trigger source for the Router Lambda
+# Connect SQS Queue directly as the trigger source for the Router Lambda
 resource "aws_lambda_event_source_mapping" "sqs_to_router" {
-  event_source_arn = aws_sqs_queue.ingestion_fifo_queue.arn
+  event_source_arn = aws_sqs_queue.ingestion_queue.arn
   function_name    = aws_lambda_function.router_lambda.arn
   batch_size       = 10 # Process up to 10 file events at a time
 }
@@ -147,7 +147,7 @@ resource "aws_iam_role_policy" "lambda_policy" {
       {
         Effect   = "Allow"
         Action   = ["sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes"]
-        Resource = [aws_sqs_queue.ingestion_fifo_queue.arn]
+        Resource = [aws_sqs_queue.ingestion_queue.arn]
       },
       {
         Effect   = "Allow"
