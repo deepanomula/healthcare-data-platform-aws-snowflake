@@ -24,10 +24,10 @@ provider "aws" {
   region = "us-east-1"
 }
 
-# 1. Declare a single, unified Data Source Name variable
-variable "snowflake_dsn" { type = string }
+# 1. Declare a connection string variable
+variable "snowflake_connection_string" { type = string }
 
 # 2. Pass it directly to the provider
 provider "snowflake" {
-  dsn = var.snowflake_dsn
+  connection_string = var.snowflake_connection_string
 }

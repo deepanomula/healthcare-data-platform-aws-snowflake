@@ -68,4 +68,4 @@ jobs:
           AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
           
           # 💡 Passing all fields satisfies the validation engine perfectly
-          TF_VAR_snowflake_dsn: "${{ secrets.SNOWFLAKE_USER }}:${{ secrets.SNOWFLAKE_PASSWORD }}@pr96137.us-east-2.aws.snowflakecomputing.com"
+          TF_VAR_snowflake_connection_string: "snowflake://${{ secrets.SNOWFLAKE_USER }}:${{ secrets.SNOWFLAKE_PASSWORD }}@pr96137.us-east-2.aws.snowflakecomputing.com"
