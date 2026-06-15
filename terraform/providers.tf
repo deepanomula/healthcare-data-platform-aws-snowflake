@@ -24,16 +24,18 @@ provider "aws" {
   region = "us-east-1"
 }
 
-# 1. Map standard parameters required by the modern v1.0 engine validation rules
+# 1. Map all properties to allow host-based legacy routing validation
 variable "snowflake_organization" { type = string }
 variable "snowflake_account_name" { type = string }
+variable "snowflake_host"         { type = string }
 variable "snowflake_user"         { type = string }
 variable "snowflake_password"     { type = string }
 
-# 2. Configure the provider block with standard arguments
+# 2. Configure the unified provider block
 provider "snowflake" {
   organization_name = var.snowflake_organization
   account_name      = var.snowflake_account_name
+  host              = var.snowflake_host
   user              = var.snowflake_user
   password          = var.snowflake_password
 }

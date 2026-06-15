@@ -67,8 +67,9 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
           
-         # 💡 Concatenating the region to the account name forces the driver to generate the legacy URL pattern!
-          TF_VAR_snowflake_organization: "aws"
-          TF_VAR_snowflake_account_name: "pr96137-us-east-2"
+         # 💡 Empty organization string instructs the driver to use the host string directly
+          TF_VAR_snowflake_organization: ""
+          TF_VAR_snowflake_account_name: "pr96137"
+          TF_VAR_snowflake_host: "pr96137.us-east-2.aws.snowflakecomputing.com"
           TF_VAR_snowflake_user: ${{ secrets.SNOWFLAKE_USER }}
           TF_VAR_snowflake_password: ${{ secrets.SNOWFLAKE_PASSWORD }}
