@@ -12,18 +12,17 @@ resource "aws_s3_bucket" "silver_bucket" {
 }
 
 # ==========================================
-# 2. INGESTION SHOCK-ABSORBER: SQS FIFO QUEUE
+# 2. INGESTION SHOCK-ABSORBER: STANDARD SQS QUEUE
 # ==========================================
-resource "aws_sqs_queue" "ingestion_fifo_queue" {
-  name                        = "university-vitals-ingestion-queue.fifo"
-  fifo_queue                  = true
-  content_based_deduplication = true
-  visibility_timeout_seconds  = 300 # Matches our Lambda timeout window
+resource "aws_sqs_queue" "ingestion_queue" {
+  # 💡 Removed the ".fifo" suffix and turned off FIFO configurations
+  name                        = "university-vitals-ingestion-queue"
+  visibility_timeout_seconds  = 300 
 }
 
-# Allow S3 Buckets to push event notifications to our SQS FIFO Queue
+# Allow S3 Buckets to push event notifications to our SQS Queue
 resource "aws_sqs_queue_policy" "sqs_policy" {
-  queue_url = aws_sqs_queue.ingestion_fifo_queue.id
+  queue_url = aws_sqs_queue.ingestion_queue.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -32,7 +31,7 @@ resource "aws_sqs_queue_policy" "sqs_policy" {
         Effect    = "Allow"
         Principal = { Service = "s3.amazonaws.com" }
         Action    = "sqs:SendMessage"
-        Resource  = aws_sqs_queue.ingestion_fifo_queue.arn
+        Resource  = aws_sqs_queue.ingestion_queue.arn
         Condition = {
           ArnEquals = { "aws:SourceArn" = aws_s3_bucket.bronze_bucket.arn }
         }
@@ -48,7 +47,8 @@ resource "aws_s3_bucket_notification" "bucket_notification" {
   bucket = aws_s3_bucket.bronze_bucket.id
 
   queue {
-    queue_arn     = aws_sqs_queue.ingestion_fifo_queue.arn
+    # 💡 Pointing to the updated standard queue mapping
+    queue_arn     = aws_sqs_queue.ingestion_queue.arn
     events        = ["s3:ObjectCreated:*"]
     filter_suffix = ".csv"
   }
