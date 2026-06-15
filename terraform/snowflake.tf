@@ -30,7 +30,7 @@ resource "snowflake_file_format" "csv_format" {
   field_delimiter      = ","
   skip_header          = 1
   field_optionally_enclosed_by = "\""
-  null_if              = ("\\N", "NULL", "")
+  null_if              = ["\\N", "NULL", ""]
 }
 
 # ==========================================
