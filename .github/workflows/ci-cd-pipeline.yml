@@ -67,9 +67,8 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
           
-         # 💡 Empty organization string instructs the driver to use the host string directly
-          TF_VAR_snowflake_organization: "pr96137"
-          TF_VAR_snowflake_account_name: "pr96137"
-          TF_VAR_snowflake_host: "pr96137.us-east-2.aws.snowflakecomputing.com"
-          TF_VAR_snowflake_user: ${{ secrets.SNOWFLAKE_USER }}
-          TF_VAR_snowflake_password: ${{ secrets.SNOWFLAKE_PASSWORD }}
+          # 💡 Native provider environment variables automatically correct legacy regional endpoints
+          SNOWFLAKE_ACCOUNT_NAME: "pr96137"
+          SNOWFLAKE_HOST: "pr96137.us-east-2.aws.snowflakecomputing.com"
+          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
