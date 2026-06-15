@@ -19,7 +19,6 @@ terraform {
     bucket         = "university-vitals-tf-state-bucket"
     key            = "prod/healthcare-platform/terraform.tfstate"
     region         = "us-east-1"
-    use_lockfile = true
   }
 }
 
