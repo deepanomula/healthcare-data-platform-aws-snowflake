@@ -10,55 +10,43 @@ This repository demonstrates an advanced **Dynamic Compute Router Pattern** usin
 
 The platform implements a decoupled, three-tier data lake pattern (Bronze ──> Silver ──> Gold) optimized for operational cost efficiency and strict HIPAA data governance.
 
-    [ Multi-Vendor Files ]
-                │ (CSV / XML Drops)
-                ▼
-    ┌───────────────────────┐
-    │   S3 Ingestion Lake   │  <── (Bronze Tier)
-    └───────────┬───────────┘
-             │ (S3 Event Notification)
-             ▼
-    ┌───────────────────────┐
-    │     SQS FIFO Queue    │  <── (Ingestion Shock-Absorber / Throttle)
-    └───────────┬───────────┘
-                │ (Event Trigger)
-                ▼
-    ┌───────────────────────┐
-    │  Router Lambda Cop    │  <── (Dynamic Compute Gatekeeper)
-    └─────┬───────────┬─────┘
-          │           │
-          │ < 50MB    │ ≥ 50MB or .xml
-          ▼           ▼
-┌─────────────────┐ ┌─────────────────┐
-│ Cleansing       │ │ AWS Glue Job    │
-│ Lambda Function │ │ (PySpark Dist.) │
-└────────┬────────┘ └────────┬────────┘
-         │                   │
-         └─────────┬─────────┘
-                   ▼ (Salted SHA-256 Masking / Lineage Injection)
-        ┌───────────────────────┐
-        │   S3 Optimized Lake   │  <── (Silver Tier: Partitioned Parquet)
-        └───────────┬───────────┘
-                    │ (Automated Snowpipe)
-                    ▼
-        ┌───────────────────────┐
-        │ Snowflake Staging     │  <── (Append-Only Copy Buffer)
-        └───────────┬───────────┘
-                    │ (CDC Stream Bookmarking)
-                    ▼
-        ┌───────────────────────┐
-        │  Snowflake Stream     │
-        └───────────┬───────────┘
-                    │ (Reactive Trigger Condition)
-                    ▼
-        ┌───────────────────────┐
-        │ Snowflake CRON Task   │  <── (Windowed Deduplication Matrix)
-        └───────────┬───────────┘
-                    │ (Idempotent MERGE Statement)
-                    ▼
-        ┌───────────────────────┐
-        │ Fact Patient Vitals   │  <── (Gold Tier: Clean Production Core)
-        └───────────────────────┘
+====================================================================================
+1. BRONZE TIER     [ Multi-Vendor File Drops (CSV / XML) ]
+                                  │
+                                  ▼
+                   [ S3 Ingestion Bucket: Bronze Data Lake ]
+                                  │
+                                  ▼ (S3 Event Notification)
+                   [ AWS SQS FIFO Queue (Ingestion Throttle) ]
+                                  │
+                                  ▼
+====================================================================================
+2. COMPUTE ROUTER  [ Router Lambda Handler (Dynamic Gatekeeper) ]
+                                  │
+                  ┌───────────────┴───────────────┐
+                  │ < 50MB Payload                │ ≥ 50MB or .xml
+                  ▼                               ▼
+     [ Transformer Lambda Function ]     [ AWS Glue Distributed Spark Job ]
+                  │                               │
+                  └───────────────┬───────────────┘
+                                  │ (Salted HMAC-SHA256 Masking & Lineage)
+                                  ▼
+====================================================================================
+3. SILVER TIER     [ S3 Clean Storage Bucket: Silver Data Lake (Parquet) ]
+                                  │
+                                  ▼ (Automated Snowpipe Event Ingestion)
+                   [ Snowflake Staging Table (Append-Only Buffer) ]
+                                  │
+                                  ▼ (Continuous Change Data Capture)
+====================================================================================
+4. GOLD WAREHOUSE  [ Snowflake Data Stream (CDC Transaction Bookmark) ]
+                                  │
+                                  ▼ (Automated Task Condition Trigger)
+                   [ Snowflake Scheduled Task (Deduplication Engine) ]
+                                  │
+                                  ▼ (Idempotent MERGE Statement)
+                   [ CLINICAL_GOLD.FACT_PATIENT_VITALS (Core Production) ]
+====================================================================================
 
 ### 🧠 Core Engineering Design Patterns
 
