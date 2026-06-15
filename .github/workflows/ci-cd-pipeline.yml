@@ -1,0 +1,44 @@
+name: Healthcare Data Platform CI/CD
+
+# 1. Trigger the workflow automatically on every push to the main branch
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  python-validation:
+    # 2. Spin up a clean virtual Ubuntu Linux server in the GitHub Cloud
+    runs-on: ubuntu-latest
+
+    steps:
+      # 3. Pull your repository code into the virtual machine
+      - name: Checkout Repository Code
+        uses: actions/checkout@v4
+
+      # 4. Install Python 3.11 on the virtual machine
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # 5. Install your code's specific software packages
+      - name: Install Project Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f src/lambda/requirements.txt ]; then pip install -r src/lambda/requirements.txt; fi
+          pip install pytest flake8
+
+      # 6. Run a code quality check (Linter) to ensure professional python formatting
+      - name: Run Flake8 Code Style Linter
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings so it doesn't break your build yet
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      # 7. Execute your automated unit tests to prove your processing works flawlessly
+      - name: Execute PyTest Unit Test Matrix
+        run: |
+          if [ -f src/lambda/test_lambda.py ]; then pytest src/lambda/test_lambda.py; else echo "No unit tests found yet!"; fi
