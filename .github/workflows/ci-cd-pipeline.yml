@@ -52,15 +52,22 @@ jobs:
           zip ../../terraform/router_payload.zip router_handler.py
           zip ../../terraform/transformer_payload.zip lambda_function.py
 
-      # 3. Initialize and deploy your infrastructure live to AWS
+      # 3. Initialize and deploy your infrastructure live to AWS & Snowflake
       - name: Setup & Run Terraform CD
         uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.7"
       - run: |
           cd terraform
           terraform init -reconfigure
           terraform apply -auto-approve
         env:
-          # 💡 Passing these tokens allows the provider to authenticate seamlessly
+          # Pass AWS keys to make absolutely sure the provider can authenticate
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
+          
+          # Pass Snowflake credentials globally to this execution block
           SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
           SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
           SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
