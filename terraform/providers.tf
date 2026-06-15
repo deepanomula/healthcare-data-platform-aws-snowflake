@@ -14,7 +14,7 @@ terraform {
     bucket         = "university-vitals-tf-state-bucket"
     key            = "prod/healthcare-platform/terraform.tfstate"
     region         = "us-east-1"
-    dynamodb_table = "terraform-state-locking"
+    use_lockfile = true
   }
 }
 
