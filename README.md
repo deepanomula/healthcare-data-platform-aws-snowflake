@@ -44,7 +44,7 @@ graph TD
         J -->|Idempotent MERGE| K[(CLINICAL_GOLD<br>FACT_PATIENT_VITALS)]
     end
     class I,J,K gold;
-
+```
 ----
 
 ### 🧠 Core Engineering Design Patterns
