@@ -8,13 +8,13 @@ This repository demonstrates an advanced **Dynamic Compute Router Pattern** usin
 
 ## 🏗️ Architecture Blueprint
 
-The platform implements a decoupled, three-tier data lake pattern (Bronze ──> Silver ──> Gold) optimized for operational cost efficiency and strict HIPAA data governance.
+The platform implements a decoupled, three-tier data lake pattern optimized for operational cost efficiency and strict HIPAA data governance.
 
+```mermaid
 graph TD
     %% Styling Configuration
     classDef bronze fill:#b9770e,stroke:#333,stroke-width:2px,color:#fff;
     classDef router fill:#2471a3,stroke:#333,stroke-width:2px,color:#fff;
-    classDef compute fill:#138d75,stroke:#333,stroke-width:2px,color:#fff;
     classDef silver fill:#7d6608,stroke:#333,stroke-width:2px,color:#fff;
     classDef gold fill:#d4ac0d,stroke:#333,stroke-width:2px,color:#111;
 
@@ -44,6 +44,8 @@ graph TD
         J -->|Idempotent MERGE| K[(CLINICAL_GOLD<br>FACT_PATIENT_VITALS)]
     end
     class I,J,K gold;
+
+----
 
 ### 🧠 Core Engineering Design Patterns
 
