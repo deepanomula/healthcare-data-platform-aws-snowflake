@@ -10,43 +10,40 @@ This repository demonstrates an advanced **Dynamic Compute Router Pattern** usin
 
 The platform implements a decoupled, three-tier data lake pattern (Bronze ──> Silver ──> Gold) optimized for operational cost efficiency and strict HIPAA data governance.
 
-====================================================================================
-1. BRONZE TIER     [ Multi-Vendor File Drops (CSV / XML) ]
-                                  │
-                                  ▼
-                   [ S3 Ingestion Bucket: Bronze Data Lake ]
-                                  │
-                                  ▼ (S3 Event Notification)
-                   [ AWS SQS FIFO Queue (Ingestion Throttle) ]
-                                  │
-                                  ▼
-====================================================================================
-2. COMPUTE ROUTER  [ Router Lambda Handler (Dynamic Gatekeeper) ]
-                                  │
-                  ┌───────────────┴───────────────┐
-                  │ < 50MB Payload                │ ≥ 50MB or .xml
-                  ▼                               ▼
-     [ Transformer Lambda Function ]     [ AWS Glue Distributed Spark Job ]
-                  │                               │
-                  └───────────────┬───────────────┘
-                                  │ (Salted HMAC-SHA256 Masking & Lineage)
-                                  ▼
-====================================================================================
-3. SILVER TIER     [ S3 Clean Storage Bucket: Silver Data Lake (Parquet) ]
-                                  │
-                                  ▼ (Automated Snowpipe Event Ingestion)
-                   [ Snowflake Staging Table (Append-Only Buffer) ]
-                                  │
-                                  ▼ (Continuous Change Data Capture)
-====================================================================================
-4. GOLD WAREHOUSE  [ Snowflake Data Stream (CDC Transaction Bookmark) ]
-                                  │
-                                  ▼ (Automated Task Condition Trigger)
-                   [ Snowflake Scheduled Task (Deduplication Engine) ]
-                                  │
-                                  ▼ (Idempotent MERGE Statement)
-                   [ CLINICAL_GOLD.FACT_PATIENT_VITALS (Core Production) ]
-====================================================================================
+graph TD
+    %% Styling Configuration
+    classDef bronze fill:#b9770e,stroke:#333,stroke-width:2px,color:#fff;
+    classDef router fill:#2471a3,stroke:#333,stroke-width:2px,color:#fff;
+    classDef compute fill:#138d75,stroke:#333,stroke-width:2px,color:#fff;
+    classDef silver fill:#7d6608,stroke:#333,stroke-width:2px,color:#fff;
+    classDef gold fill:#d4ac0d,stroke:#333,stroke-width:2px,color:#111;
+
+    subgraph BRONZE_TIER [1. Bronze Ingestion Tier]
+        A[Multi-Vendor Files<br>CSV / XML Drops] --> B(S3 Ingestion Bucket<br>Bronze Data Lake)
+        B -->|S3 Event Notification| C[AWS SQS FIFO Queue<br>Ingestion Throttle]
+    end
+    class B,C bronze;
+
+    subgraph COMPUTE_ROUTER [2. Dynamic Compute Router Gate]
+        C --> D{Router Lambda Cop<br>Inspects File Size}
+        D -->|< 50MB| E[Transformer Lambda<br>Serverless Compute]
+        D -->|≥ 50MB or .xml| F[AWS Glue Spark Job<br>Distributed Cluster]
+    end
+    class D,E,F router;
+
+    subgraph SILVER_TIER [3. Silver Storage Tier]
+        E -->|Salted HMAC-SHA256 Masking| G(S3 Optimized Storage<br>Silver Lake: Parquet)
+        F -->|Salted HMAC-SHA256 Masking| G
+        G -->|Automated Snowpipe| H[(Snowflake Staging<br>Append-Only Table)]
+    end
+    class G,H silver;
+
+    subgraph GOLD_WAREHOUSE [4. Change Data Capture Gold Warehouse]
+        H -->|Continuous CDC| I[Snowflake Data Stream<br>Transaction Bookmark]
+        I -->|CRON Trigger Condition| J{Snowflake Task<br>Windowed Deduplication}
+        J -->|Idempotent MERGE| K[(CLINICAL_GOLD<br>FACT_PATIENT_VITALS)]
+    end
+    class I,J,K gold;
 
 ### 🧠 Core Engineering Design Patterns
 
