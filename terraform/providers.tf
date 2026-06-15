@@ -21,3 +21,7 @@ terraform {
 provider "aws" {
   region = var.aws_region
 }
+
+provider "snowflake" {
+  # These will be supplied securely by your GitHub Actions runner secrets
+}

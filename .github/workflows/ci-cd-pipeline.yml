@@ -59,3 +59,8 @@ jobs:
           cd terraform
           terraform init -reconfigure
           terraform apply -auto-approve
+        env:
+          # 💡 Passing these tokens allows the provider to authenticate seamlessly
+          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
