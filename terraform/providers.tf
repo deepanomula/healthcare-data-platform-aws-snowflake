@@ -6,6 +6,11 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    snowflake = {
+      # 💡 Ensure this points strictly to the verified community org
+      source  = "Snowflake-Labs/snowflake"
+      version = "~> 1.0" 
+    }
   }
 
   # Best Practice: Store your state file remotely in S3 with DynamoDB locking
