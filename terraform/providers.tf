@@ -23,15 +23,16 @@ provider "aws" {
   region = "us-east-1"
 }
 
-# Pure v1.0 global variables configuration
 variable "snowflake_organization_name" { type = string }
 variable "snowflake_account_name"      { type = string }
+variable "snowflake_host"              { type = string } # Ensure this is declared
 variable "snowflake_user"              { type = string }
 variable "snowflake_password"          { type = string }
 
 provider "snowflake" {
   organization_name = var.snowflake_organization_name
   account_name      = var.snowflake_account_name
+  host              = var.snowflake_host # Explicitly forces the direct routing path
   user              = var.snowflake_user
   password          = var.snowflake_password
 }

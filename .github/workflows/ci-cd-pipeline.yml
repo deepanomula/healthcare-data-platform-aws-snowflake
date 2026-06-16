@@ -67,11 +67,11 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
           
-          # 💡 The exact string validated by your TLS certificate
           TF_VAR_snowflake_organization_name: "pdxaaj"
-          
-          # 💡 Provide your explicit locator account identifier string
           TF_VAR_snowflake_account_name: "PR96137"
+          
+          # 💡 CRITICAL FIX: Use the dot-separated global domain format without any protocol prefix
+          TF_VAR_snowflake_host: "pdxaaj.snowflakecomputing.com"
           
           TF_VAR_snowflake_user: ${{ secrets.SNOWFLAKE_USER }}
           TF_VAR_snowflake_password: ${{ secrets.SNOWFLAKE_PASSWORD }}
