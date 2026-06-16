@@ -13,9 +13,8 @@ terraform {
       version = "~> 5.0"
     }
     snowflake = {
-      # 💡 Updated to the modern official registry namespace
       source  = "snowflakedb/snowflake"
-      version = "~> 1.0"
+      version = "~> 1.0" 
     }
   }
 }
@@ -24,6 +23,13 @@ provider "aws" {
   region = "us-east-1"
 }
 
-# 💡 No custom input variables or mappings needed! 
-# The v1.0 driver reads standard SNOWFLAKE_ env vars automatically.
-provider "snowflake" {}
+# 💡 Define parameters for direct host injection
+variable "snowflake_host"     { type = string }
+variable "snowflake_user"     { type = string }
+variable "snowflake_password" { type = string }
+
+provider "snowflake" {
+  host     = var.snowflake_host
+  user     = var.snowflake_user
+  password = var.snowflake_password
+}
