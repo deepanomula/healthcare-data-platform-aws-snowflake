@@ -67,11 +67,12 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
           
+          # Keep these to satisfy the provider schema properties
           TF_VAR_snowflake_organization_name: "pdxaaj"
-          TF_VAR_snowflake_account_name: "pr96137"
+          TF_VAR_snowflake_account_name: "pdxaaj"
           
-          # 💡 CRITICAL FIX: Combine account and organization as dotted subdomains
-          TF_VAR_snowflake_host: "pr96137.pdxaaj.snowflakecomputing.com"
+          # 💡 CRITICAL FIX: Direct the traffic to the exact US-West-2 regional domain listed on your SSL certificate
+          TF_VAR_snowflake_host: "pdxaaj.us-west-2.aws.snowflakecomputing.com"
           
           TF_VAR_snowflake_user: ${{ secrets.SNOWFLAKE_USER }}
           TF_VAR_snowflake_password: ${{ secrets.SNOWFLAKE_PASSWORD }}
