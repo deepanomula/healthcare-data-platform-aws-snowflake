@@ -24,7 +24,6 @@ jobs:
       - name: Install Dependencies & Test
         run: |
           python -m pip install --upgrade pip
-          # Added boto3 right here to allow lambda_function.py to load completely
           pip install pytest flake8 pandas pyarrow boto3
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           if [ -f src/lambda/test_lambda.py ]; then pytest src/lambda/test_lambda.py; fi
@@ -37,7 +36,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4.1.7
 
-      # 1. Configure cloud authentication using your encrypted GitHub secrets
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -45,30 +43,25 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # 2. Package your Python applications into zip payloads dynamically inside the cloud
       - name: Package Lambda Zip Payloads
         run: |
           cd src/lambda
           zip ../../terraform/router_payload.zip router_handler.py
           zip ../../terraform/transformer_payload.zip lambda_function.py
 
-      # 3. Initialize and deploy your infrastructure live to AWS & Snowflake
-      - name: Setup & Run Terraform CD
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: "1.5.7"
-      - run: |
+      - name: Terraform Init and Apply
+        run: |
           cd terraform
           terraform init -reconfigure
           terraform apply -auto-approve
         env:
-          # Pass AWS keys to make absolutely sure the provider can authenticate
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
           
-          # 💡 FIX: Combine organization and account locator as the unified account identifier string
-          TF_VAR_snowflake_account_name: "pdxaaj-pr96137"
-          
-          TF_VAR_snowflake_user: ${{ secrets.SNOWFLAKE_USER }}
-          TF_VAR_snowflake_password: ${{ secrets.SNOWFLAKE_PASSWORD }}
+          # 💡 Native Snowflake Environment Variables
+          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+          SNOWFLAKE_ORGANIZATION_NAME: "pdxaaj"
+          SNOWFLAKE_ACCOUNT_NAME: "pr96137"
+          SNOWFLAKE_HOST: "pr96137.us-east-2.aws.snowflakecomputing.com"

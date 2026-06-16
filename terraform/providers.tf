@@ -23,14 +23,12 @@ provider "aws" {
   region = "us-east-1"
 }
 
-variable "snowflake_account_name" { type = string }
-variable "snowflake_user"         { type = string }
-variable "snowflake_password"     { type = string }
+# 💡 A single clean profile token that avoids all URL-building validation bugs
+variable "snowflake_profile" { 
+  type    = string
+  default = "tf_profile"
+}
 
 provider "snowflake" {
-  # 💡 By providing ONLY the account_name variable formatted cleanly, 
-  # we prevent the v1.0 driver from auto-generating a broken URL prefix.
-  account_name = var.snowflake_account_name
-  user         = var.snowflake_user
-  password     = var.snowflake_password
+  profile = var.snowflake_profile
 }
