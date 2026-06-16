@@ -68,12 +68,18 @@ jobs:
           password = "${{ secrets.SNOWFLAKE_PASSWORD }}"
           host = "pr96137.us-east-2.aws.snowflakecomputing.com"
 
+          # Legacy flat profile header required by the v1.0 Go driver fallback
+          [tf_profile]
+          user = "${{ secrets.SNOWFLAKE_USER }}"
+          password = "${{ secrets.SNOWFLAKE_PASSWORD }}"
+          host = "pr96137.us-east-2.aws.snowflakecomputing.com"
+
+          # Modern nested profile header 
           [profile.tf_profile]
           user = "${{ secrets.SNOWFLAKE_USER }}"
           password = "${{ secrets.SNOWFLAKE_PASSWORD }}"
           host = "pr96137.us-east-2.aws.snowflakecomputing.com"
           EOF
-
       # 3. Initialize and deploy your infrastructure live to AWS & Snowflake
       - name: Terraform Init and Apply
         run: |
