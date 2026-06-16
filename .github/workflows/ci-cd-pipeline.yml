@@ -67,7 +67,8 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
           
-          # 💡 Hard-coding the host parameter forces the driver to bypass its broken URL generator!
+          # 💡 Supplying both fields clears the validation check AND forces the correct URL endpoint!
+          TF_VAR_snowflake_account: "pr96137"
           TF_VAR_snowflake_host: "https://pr96137.us-east-2.aws.snowflakecomputing.com"
           TF_VAR_snowflake_user: ${{ secrets.SNOWFLAKE_USER }}
           TF_VAR_snowflake_password: ${{ secrets.SNOWFLAKE_PASSWORD }}
