@@ -37,6 +37,7 @@ jobs:
         uses: actions/checkout@v4.1.7
 
       # 1. Configure cloud authentication
+      # 1. Configure cloud authentication
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -44,11 +45,10 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # 💡 FIX: Pull down and cache the Terraform CLI binary on the runner path!
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: "1.8.0" # Matches your configuration constraints safely
+          terraform_version: "1.8.0"
 
       # 2. Package your Python applications into zip payloads dynamically
       - name: Package Lambda Zip Payloads
@@ -56,6 +56,17 @@ jobs:
           cd src/lambda
           zip ../../terraform/router_payload.zip router_handler.py
           zip ../../terraform/transformer_payload.zip lambda_function.py
+
+      # 💡 FIX: Write the exact file the provider's fallback engine is looking for!
+      - name: Generate Snowflake Config File
+        run: |
+          mkdir -p ~/.snowflake
+          cat << EOF > ~/.snowflake/config
+          [default]
+          user = "${{ secrets.SNOWFLAKE_USER }}"
+          password = "${{ secrets.SNOWFLAKE_PASSWORD }}"
+          host = "pr96137.us-east-2.aws.snowflakecomputing.com"
+          EOF
 
       # 3. Initialize and deploy your infrastructure live to AWS & Snowflake
       - name: Terraform Init and Apply
@@ -67,10 +78,3 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
-          
-          # Native Snowflake Environment Variables for the underlying driver
-          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
-          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
-          SNOWFLAKE_ORGANIZATION_NAME: "pdxaaj"
-          SNOWFLAKE_ACCOUNT_NAME: "pr96137"
-          SNOWFLAKE_HOST: "pr96137.us-east-2.aws.snowflakecomputing.com"
