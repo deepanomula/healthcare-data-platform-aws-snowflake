@@ -37,7 +37,6 @@ jobs:
         uses: actions/checkout@v4.1.7
 
       # 1. Configure cloud authentication
-      # 1. Configure cloud authentication
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -57,36 +56,6 @@ jobs:
           zip ../../terraform/router_payload.zip router_handler.py
           zip ../../terraform/transformer_payload.zip lambda_function.py
 
-      # 💡 FIX: Write the exact file the provider's fallback engine is looking for!
-      # 💡 FIX: Add both [default] and [tf_profile] blocks to completely clear the state cache mismatch!
-      - name: Generate Snowflake Config File
-        run: |
-          mkdir -p ~/.snowflake
-          cat << 'EOF' > ~/.snowflake/config
-          [default]
-          user = "${{ secrets.SNOWFLAKE_USER }}"
-          password = "${{ secrets.SNOWFLAKE_PASSWORD }}"
-          account = "pr96137"
-          region = "us-east-2.aws"
-
-          [tf_profile]
-          user = "${{ secrets.SNOWFLAKE_USER }}"
-          password = "${{ secrets.SNOWFLAKE_PASSWORD }}"
-          account = "pr96137"
-          region = "us-east-2.aws"
-          # 💡 Fallback for strict v1.0 global account parsing
-          account_name = "pr96137"
-          organization_name = "pdxaaj"
-
-          [profile.tf_profile]
-          user = "${{ secrets.SNOWFLAKE_USER }}"
-          password = "${{ secrets.SNOWFLAKE_PASSWORD }}"
-          account = "pr96137"
-          region = "us-east-2.aws"
-          account_name = "pr96137"
-          organization_name = "pdxaaj"
-          EOF
-      # 3. Initialize and deploy your infrastructure live to AWS & Snowflake
       - name: Terraform Init and Apply
         run: |
           cd terraform
@@ -96,3 +65,14 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
+          
+          # 💡 Satisfies the provider compilation checks perfectly
+          TF_VAR_snowflake_organization_name: "pdxaaj"
+          TF_VAR_snowflake_account_name: "pr96137"
+          
+          # 💡 FORCES the network traffic directly to the working Ohio AWS server route
+          # This completely overrides the provider's buggy hyphenated generator path.
+          TF_VAR_snowflake_host: "pr96137.us-east-2.aws.snowflakecomputing.com"
+          
+          TF_VAR_snowflake_user: ${{ secrets.SNOWFLAKE_USER }}
+          TF_VAR_snowflake_password: ${{ secrets.SNOWFLAKE_PASSWORD }}

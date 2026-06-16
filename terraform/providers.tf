@@ -29,6 +29,16 @@ variable "snowflake_profile" {
   default = "tf_profile"
 }
 
+variable "snowflake_organization_name" { type = string }
+variable "snowflake_account_name"      { type = string }
+variable "snowflake_host"              { type = string }
+variable "snowflake_user"              { type = string }
+variable "snowflake_password"          { type = string }
+
 provider "snowflake" {
-  profile = var.snowflake_profile
+  organization_name = var.snowflake_organization_name
+  account_name      = var.snowflake_account_name
+  host              = var.snowflake_host
+  user              = var.snowflake_user
+  password          = var.snowflake_password
 }
