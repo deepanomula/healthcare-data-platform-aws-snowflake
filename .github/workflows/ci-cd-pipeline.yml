@@ -67,12 +67,10 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
           
-          # 💡 The organization name is simply your Snowflake Organization (often same as your account prefix or found in admin panel)
-          # If you don't know your org name, you can find it by running `SELECT CURRENT_ORGANIZATION_NAME();` in Snowflake.
-          TF_VAR_snowflake_organization_name: "PR96137" 
+          TF_VAR_snowflake_organization_name: "pdxaaj"
           
-          # 💡 CRITICAL: For AWS legacy regions, format this as "LOCATOR.REGION"
-          TF_VAR_snowflake_account_name: "pr96137.us-east-2"
+          # 💡 FIX: Your specific account locator string
+          TF_VAR_snowflake_account_name: "pr96137"
           
           TF_VAR_snowflake_user: ${{ secrets.SNOWFLAKE_USER }}
           TF_VAR_snowflake_password: ${{ secrets.SNOWFLAKE_PASSWORD }}
