@@ -67,5 +67,8 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
           
-         # 💡 FIX: Inject a raw connection string that completely bypasses the provider's URL constructor
-          TF_VAR_snowflake_dsn: "${{ secrets.SNOWFLAKE_USER }}:${{ secrets.SNOWFLAKE_PASSWORD }}@pr96137.us-east-2.aws/"
+          # 💡 FIX: Combine organization and account locator as the unified account identifier string
+          TF_VAR_snowflake_account_name: "pdxaaj-pr96137"
+          
+          TF_VAR_snowflake_user: ${{ secrets.SNOWFLAKE_USER }}
+          TF_VAR_snowflake_password: ${{ secrets.SNOWFLAKE_PASSWORD }}

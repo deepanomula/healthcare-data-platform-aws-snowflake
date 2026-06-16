@@ -23,9 +23,14 @@ provider "aws" {
   region = "us-east-1"
 }
 
-# Declaring a single connection string variable
-variable "snowflake_dsn" { type = string }
+variable "snowflake_account_name" { type = string }
+variable "snowflake_user"         { type = string }
+variable "snowflake_password"     { type = string }
 
 provider "snowflake" {
-  dsn = var.snowflake_dsn
+  # 💡 By providing ONLY the account_name variable formatted cleanly, 
+  # we prevent the v1.0 driver from auto-generating a broken URL prefix.
+  account_name = var.snowflake_account_name
+  user         = var.snowflake_user
+  password     = var.snowflake_password
 }
