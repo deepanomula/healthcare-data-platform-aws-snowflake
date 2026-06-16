@@ -74,12 +74,17 @@ jobs:
           password = "${{ secrets.SNOWFLAKE_PASSWORD }}"
           account = "pr96137"
           region = "us-east-2.aws"
+          # 💡 Fallback for strict v1.0 global account parsing
+          account_name = "pr96137"
+          organization_name = "pdxaaj"
 
           [profile.tf_profile]
           user = "${{ secrets.SNOWFLAKE_USER }}"
           password = "${{ secrets.SNOWFLAKE_PASSWORD }}"
           account = "pr96137"
           region = "us-east-2.aws"
+          account_name = "pr96137"
+          organization_name = "pdxaaj"
           EOF
       # 3. Initialize and deploy your infrastructure live to AWS & Snowflake
       - name: Terraform Init and Apply
