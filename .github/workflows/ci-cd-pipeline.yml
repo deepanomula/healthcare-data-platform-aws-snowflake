@@ -58,11 +58,17 @@ jobs:
           zip ../../terraform/transformer_payload.zip lambda_function.py
 
       # 💡 FIX: Write the exact file the provider's fallback engine is looking for!
+      # 💡 FIX: Add both [default] and [tf_profile] blocks to completely clear the state cache mismatch!
       - name: Generate Snowflake Config File
         run: |
           mkdir -p ~/.snowflake
-          cat << EOF > ~/.snowflake/config
+          cat << 'EOF' > ~/.snowflake/config
           [default]
+          user = "${{ secrets.SNOWFLAKE_USER }}"
+          password = "${{ secrets.SNOWFLAKE_PASSWORD }}"
+          host = "pr96137.us-east-2.aws.snowflakecomputing.com"
+
+          [profile.tf_profile]
           user = "${{ secrets.SNOWFLAKE_USER }}"
           password = "${{ secrets.SNOWFLAKE_PASSWORD }}"
           host = "pr96137.us-east-2.aws.snowflakecomputing.com"
