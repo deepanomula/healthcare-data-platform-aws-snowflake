@@ -67,11 +67,12 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
           
-          # 💡 These two pass the v1.0 syntax compiler rules
-          TF_VAR_snowflake_organization_name: "aws"
-          TF_VAR_snowflake_account_name: "pr96137"
+          # 💡 The organization name is simply your Snowflake Organization (often same as your account prefix or found in admin panel)
+          # If you don't know your org name, you can find it by running `SELECT CURRENT_ORGANIZATION_NAME();` in Snowflake.
+          TF_VAR_snowflake_organization_name: "PR96137" 
           
-          # 💡 This forces the actual backend connection straight to your legacy URL
-          TF_VAR_snowflake_host: "https://pr96137.us-east-2.aws.snowflakecomputing.com"
+          # 💡 CRITICAL: For AWS legacy regions, format this as "LOCATOR.REGION"
+          TF_VAR_snowflake_account_name: "pr96137.us-east-2"
+          
           TF_VAR_snowflake_user: ${{ secrets.SNOWFLAKE_USER }}
           TF_VAR_snowflake_password: ${{ secrets.SNOWFLAKE_PASSWORD }}
