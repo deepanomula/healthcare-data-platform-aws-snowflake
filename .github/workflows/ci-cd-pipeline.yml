@@ -68,10 +68,10 @@ jobs:
           AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
           
           TF_VAR_snowflake_organization_name: "pdxaaj"
-          TF_VAR_snowflake_account_name: "PR96137"
+          TF_VAR_snowflake_account_name: "pr96137"
           
-          # 💡 CRITICAL FIX: Use the dot-separated global domain format without any protocol prefix
-          TF_VAR_snowflake_host: "pdxaaj.snowflakecomputing.com"
+          # 💡 CRITICAL FIX: Combine account and organization as dotted subdomains
+          TF_VAR_snowflake_host: "pr96137.pdxaaj.snowflakecomputing.com"
           
           TF_VAR_snowflake_user: ${{ secrets.SNOWFLAKE_USER }}
           TF_VAR_snowflake_password: ${{ secrets.SNOWFLAKE_PASSWORD }}
