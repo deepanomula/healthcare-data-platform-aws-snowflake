@@ -36,6 +36,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4.1.7
 
+      # 1. Configure cloud authentication
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -43,12 +44,20 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      # 💡 FIX: Pull down and cache the Terraform CLI binary on the runner path!
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.8.0" # Matches your configuration constraints safely
+
+      # 2. Package your Python applications into zip payloads dynamically
       - name: Package Lambda Zip Payloads
         run: |
           cd src/lambda
           zip ../../terraform/router_payload.zip router_handler.py
           zip ../../terraform/transformer_payload.zip lambda_function.py
 
+      # 3. Initialize and deploy your infrastructure live to AWS & Snowflake
       - name: Terraform Init and Apply
         run: |
           cd terraform
@@ -59,7 +68,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
           
-          # 💡 Native Snowflake Environment Variables
+          # Native Snowflake Environment Variables for the underlying driver
           SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
           SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
           SNOWFLAKE_ORGANIZATION_NAME: "pdxaaj"
