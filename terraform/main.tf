@@ -138,7 +138,7 @@ resource "aws_glue_job" "spark_transform_job" {
   }
   
   execution_property {
-    max_concurrency = 1 
+    max_concurrent_runs = 1 
   }
   
   default_arguments = {
