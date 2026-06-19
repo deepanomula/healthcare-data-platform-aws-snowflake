@@ -6,7 +6,6 @@ terraform {
     key            = "prod/data-platform/terraform.tfstate"
     region         = "us-east-1"
     encrypt        = true
-    dynamodb_table = "terraform-lock-table" # Optional: For state locking if you have it
   }
 
   required_providers {
