@@ -1,24 +1,5 @@
 # =====================================================================
-# 1. PROVIDERS & DATA EXTRACTORS
-# =====================================================================
-terraform {
-  required_version = ">= 1.5.0"
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-    snowflake = {
-      source  = "snowflakedb/snowflake"
-      version = "~> 1.0"
-    }
-  }
-}
-
-data "aws_caller_identity" "current" {}
-
-# =====================================================================
-# 2. STATEFUL COMPUTE & STORAGE PLATFORM TOPOLOGY
+# 1. STATEFUL COMPUTE & STORAGE PLATFORM TOPOLOGY
 # =====================================================================
 resource "snowflake_warehouse" "ingestion_wh" {
   name           = "INGESTION_WH"
@@ -42,7 +23,7 @@ resource "snowflake_schema" "clinical_gold" {
 }
 
 # =====================================================================
-# 3. THE DETERMINISTIC CROSS-CLOUD CRYPTOGRAPHIC HANDSHAKE
+# 2. THE DETERMINISTIC CROSS-CLOUD CRYPTOGRAPHIC HANDSHAKE
 # =====================================================================
 locals {
   snowflake_role_name = "university-vitals-snowflake-silver-role"
@@ -102,7 +83,7 @@ resource "aws_iam_role_policy" "snowflake_silver_s3_policy" {
 }
 
 # =====================================================================
-# 4. REUSABLE STAGE POINTER OVER S3 PREFIX
+# 3. REUSABLE STAGE POINTER OVER S3 PREFIX
 # =====================================================================
 resource "snowflake_stage" "silver_s3_stage" {
   name                = "SILVER_S3_STAGE"
