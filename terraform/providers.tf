@@ -2,9 +2,11 @@ terraform {
   required_version = ">= 1.5.0"
   
   backend "s3" {
-    bucket       = "university-vitals-tf-state-bucket"
-    key          = "healthcare-pipeline/terraform.tfstate"
-    region       = "us-east-1"
+    bucket         = "university-vitals-tf-state-bucket" # 💡 Your remote state tracker
+    key            = "prod/data-platform/terraform.tfstate"
+    region         = "us-east-1"
+    encrypt        = true
+    dynamodb_table = "terraform-lock-table" # Optional: For state locking if you have it
   }
 
   required_providers {
@@ -48,7 +50,7 @@ variable "SNOWFLAKE_PASSWORD" {
 # =====================================================================
 provider "snowflake" {
   organization_name = "PYDONEM"
-  account_name      = var.SNOWFLAKE_ACCOUNT
+  account_name      = "GK52446"
   
   user              = var.SNOWFLAKE_USER
   authenticator     = "SNOWFLAKE"
