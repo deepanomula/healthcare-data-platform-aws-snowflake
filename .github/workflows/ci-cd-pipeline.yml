@@ -62,17 +62,9 @@ jobs:
           terraform init -reconfigure
           terraform apply -auto-approve
         env:
+          # 💡 Adding "TF_VAR_" to the front automatically feeds these straight into your Terraform variables!
+          TF_VAR_SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          TF_VAR_SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+          TF_VAR_SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
-          
-          # 💡 Satisfies the provider compilation checks perfectly
-          TF_VAR_snowflake_organization_name: "pdxaaj"
-          TF_VAR_snowflake_account_name: "pr96137"
-          
-          # 💡 FORCES the network traffic directly to the working Ohio AWS server route
-          # This completely overrides the provider's buggy hyphenated generator path.
-          TF_VAR_snowflake_host: "pr96137.us-east-2.aws.snowflakecomputing.com"
-          
-          TF_VAR_snowflake_user: ${{ secrets.SNOWFLAKE_USER }}
-          TF_VAR_snowflake_password: ${{ secrets.SNOWFLAKE_PASSWORD }}

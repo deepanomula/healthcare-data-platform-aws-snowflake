@@ -24,6 +24,26 @@ provider "aws" {
 }
 
 # =====================================================================
+# DEPLOYMENT CONFIGURATION PASS-THROUGH HOOKS (INJECTED VIA GITHUB ACTIONS)
+# =====================================================================
+
+variable "SNOWFLAKE_ACCOUNT" {
+  type        = string
+  description = "The target Snowflake account mapping injected via remote CI/CD secret keys."
+}
+
+variable "SNOWFLAKE_USER" {
+  type        = string
+  description = "The administrative execution identity user name mapped from GitHub environment parameters."
+}
+
+variable "SNOWFLAKE_PASSWORD" {
+  type        = string
+  sensitive   = true # 💡 Hides this secret entirely from showing up in any terminal outputs or build logs!
+  description = "The cryptographic credential secret matching our production workspace identity wrapper."
+}
+
+# =====================================================================
 # THE FIXED SNOWFLAKE ORG-BASED AUTHENTICATION GATEWAY
 # =====================================================================
 provider "snowflake" {
