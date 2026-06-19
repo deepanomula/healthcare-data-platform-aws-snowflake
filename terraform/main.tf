@@ -1,6 +1,19 @@
-# ==========================================
-# 1. S3 STORAGE TIERS (Bronze & Silver)
-# ==========================================
+# =====================================================================
+# DATA & VARIABLES (Governance)
+# =====================================================================
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
+variable "secret_salt" {
+  type        = string
+  description = "Cryptographic salt used for enterprise data masking layers"
+  default     = "TexasLonghorns2026!#CloudDataPlatform"
+  sensitive   = true 
+}
+
+# =====================================================================
+# 1. S3 STORAGE TIERS (Bronze, Silver, & Config)
+# =====================================================================
 resource "aws_s3_bucket" "bronze_bucket" {
   bucket        = "university-vitals-data-lake-bronze"
   force_destroy = true
@@ -11,16 +24,32 @@ resource "aws_s3_bucket" "silver_bucket" {
   force_destroy = true
 }
 
-# ==========================================
-# 2. INGESTION SHOCK-ABSORBER: STANDARD SQS QUEUE
-# ==========================================
-resource "aws_sqs_queue" "ingestion_queue" {
-  # 💡 Removed the ".fifo" suffix and turned off FIFO configurations
-  name                        = "university-vitals-ingestion-queue"
-  visibility_timeout_seconds  = 300 
+resource "aws_s3_bucket" "config_bucket" {
+  bucket        = "university-vitals-pipeline-config"
+  force_destroy = true
 }
 
-# Allow S3 Buckets to push event notifications to our SQS Queue
+# =====================================================================
+# 2. INGESTION SHOCK-ABSORBER: SQS FIFO TIERS
+# =====================================================================
+resource "aws_sqs_queue" "ingestion_dlq" {
+  name                        = "university-vitals-ingestion-queue-dlq.fifo"
+  fifo_queue                  = true
+  content_based_deduplication = true
+}
+
+resource "aws_sqs_queue" "ingestion_queue" {
+  name                        = "university-vitals-ingestion-queue.fifo"
+  fifo_queue                  = true
+  content_based_deduplication = true
+  visibility_timeout_seconds  = 300 
+
+  redrive_policy = jsonencode({
+    deadLetterTargetArn = aws_sqs_queue.ingestion_dlq.arn
+    maxReceiveCount     = 2 
+  })
+}
+
 resource "aws_sqs_queue_policy" "sqs_policy" {
   queue_url = aws_sqs_queue.ingestion_queue.id
 
@@ -40,84 +69,89 @@ resource "aws_sqs_queue_policy" "sqs_policy" {
   })
 }
 
-# ==========================================
-# 3. EVENT NOTIFICATION TRIGGER
-# ==========================================
-resource "aws_s3_bucket_notification" "bucket_notification" {
+resource "aws_s3_bucket_notification" "bronze_bucket_notification" {
   bucket = aws_s3_bucket.bronze_bucket.id
 
   queue {
-    # 💡 Pointing to the updated standard queue mapping
-    queue_arn     = aws_sqs_queue.ingestion_queue.arn
-    events        = ["s3:ObjectCreated:*"]
-    filter_suffix = ".csv"
+    queue_arn = aws_sqs_queue.ingestion_queue.arn
+    events    = ["s3:ObjectCreated:*"]
   }
 }
 
-# ==========================================
-# 4. COMPUTE ORCHESTRATION: ROUTER LAMBDA
-# ==========================================
+# =====================================================================
+# 3. ROUTER LAMBDA (Multi-Threaded Orchestrator)
+# =====================================================================
 resource "aws_lambda_function" "router_lambda" {
-  filename      = "router_payload.zip" # Packaged via your CI/CD pipeline
+  filename      = "router_payload.zip" 
   function_name = "university-vitals-router-handler"
   role          = aws_iam_role.lambda_execution_role.arn
   handler       = "router_handler.lambda_handler"
   runtime       = "python3.11"
-  timeout       = 60
+  timeout       = 300 
 
   environment {
     variables = {
       TRANSFORMER_LAMBDA_NAME = aws_lambda_function.transformer_lambda.function_name
       GLUE_JOB_NAME           = aws_glue_job.spark_transform_job.name
+      SECRET_SALT             = var.secret_salt
     }
   }
 }
 
-# Connect SQS Queue directly as the trigger source for the Router Lambda
 resource "aws_lambda_event_source_mapping" "sqs_to_router" {
   event_source_arn = aws_sqs_queue.ingestion_queue.arn
   function_name    = aws_lambda_function.router_lambda.arn
-  batch_size       = 10 # Process up to 10 file events at a time
+  batch_size       = 10 
 }
 
-# ==========================================
-# 5. DOWNSTREAM COMPUTE: TRANSFORMER LAMBDA
-# ==========================================
+# =====================================================================
+# 4. TRANSFORMER LAMBDA (Micro-Batch Compute Tier)
+# =====================================================================
 resource "aws_lambda_function" "transformer_lambda" {
   filename      = "transformer_payload.zip"
   function_name = "university-vitals-transformer-lambda"
   role          = aws_iam_role.lambda_execution_role.arn
   handler       = "lambda_function.lambda_handler"
   runtime       = "python3.11"
-  timeout       = 300 # 5-minute threshold capacity
+  timeout       = 300 
+  reserved_concurrent_executions = 10
 
   environment {
     variables = {
-      SECRET_SALT = "TexasLonghorns2026!#CloudDataPlatform"
+      SECRET_SALT = var.secret_salt 
     }
   }
 }
 
-# ==========================================
-# 6. HEAVY COMPUTE: AWS GLUE SPARK JOB
-# ==========================================
+# =====================================================================
+# 5. AWS GLUE SPARK JOB (Heavy Macro-Batch Compute Tier)
+# =====================================================================
 resource "aws_glue_job" "spark_transform_job" {
-  name     = "university-vitals-glue-spark-job"
-  role_arn = aws_iam_role.glue_execution_role.arn
+  name         = "university-vitals-glue-spark-job"
+  role_arn     = aws_iam_role.glue_execution_role.arn
+  max_capacity = 10 
+  timeout      = 60 
+
   command {
-    script_location = "s3://${aws_s3_bucket.silver_bucket.id}/scripts/glue_spark_job.py"
+    script_location = "s3://${aws_s3_bucket.config_bucket.id}/scripts/glue_spark_job.py"
     python_version  = "3"
   }
+  
+  execution_property {
+    max_concurrency = 1 
+  }
+  
   default_arguments = {
     "--job-language"        = "python"
     "--continuous-log"      = "true"
     "--enable-metrics"      = "true"
+    "--secret_salt"         = var.secret_salt
   }
 }
 
-# ==========================================
-# 7. SECURITY & GOVERNANCE: IAM SECURITY ROLES
-# ==========================================
+# =====================================================================
+# 6. INTERNAL AWS COMPUTATION SECURITY ROLES
+# =====================================================================
 resource "aws_iam_role" "lambda_execution_role" {
   name = "university-vitals-lambda-role"
 
@@ -131,7 +165,6 @@ resource "aws_iam_role" "lambda_execution_role" {
   })
 }
 
-# Attach core permissions to the Lambda role (S3 data access, SQS polling, and internal Lambda/Glue triggers)
 resource "aws_iam_role_policy" "lambda_policy" {
   name = "university-vitals-lambda-permissions"
   role = aws_iam_role.lambda_execution_role.id
@@ -147,7 +180,7 @@ resource "aws_iam_role_policy" "lambda_policy" {
       {
         Effect   = "Allow"
         Action   = ["sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes"]
-        Resource = [aws_sqs_queue.ingestion_queue.arn]
+        Resource = ["*"]
       },
       {
         Effect   = "Allow"
@@ -168,7 +201,6 @@ resource "aws_iam_role_policy" "lambda_policy" {
   })
 }
 
-# Glue Exec Role (similar basic permissions but explicitly targeting glue actions)
 resource "aws_iam_role" "glue_execution_role" {
   name = "university-vitals-glue-role"
   assume_role_policy = jsonencode({
@@ -184,4 +216,27 @@ resource "aws_iam_role" "glue_execution_role" {
 resource "aws_iam_role_policy_attachment" "glue_service" {
   role       = aws_iam_role.glue_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
+}
+
+resource "aws_iam_role_policy" "glue_s3_policy" {
+  name = "university-vitals-glue-s3-access"
+  role = aws_iam_role.glue_execution_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = ["s3:GetObject", "s3:PutObject", "s3:ListBucket"]
+        Resource = [
+          aws_s3_bucket.bronze_bucket.arn,
+          "${aws_s3_bucket.bronze_bucket.arn}/*",
+          aws_s3_bucket.silver_bucket.arn,
+          "${aws_s3_bucket.silver_bucket.arn}/*",
+          aws_s3_bucket.config_bucket.arn,
+          "${aws_s3_bucket.config_bucket.arn}/*"
+        ]
+      }
+    ]
+  })
 }
