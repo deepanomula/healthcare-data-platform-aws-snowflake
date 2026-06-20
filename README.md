@@ -1,5 +1,7 @@
 # Enterprise Healthcare Data Platform: Automated AWS & Snowflake ELT Pipeline
 
+[![Healthcare Data Platform CI/CD](https://github.com/deepanomula/healthcare-data-platform-aws-snowflake/actions/workflows/ci-cd-pipeline.yml/badge.svg?branch=main)](https://github.com/deepanomula/healthcare-data-platform-aws-snowflake/actions/workflows/ci-cd-pipeline.yml)
+
 An event-driven, production-grade cloud data engineering platform designed to ingest, process, and securely warehouse multi-vendor clinical vitals data. 
 
 This repository demonstrates an advanced **Dynamic Compute Router Pattern** using AWS serverless architectures coupled with an automated, idempotent Change Data Capture (CDC) engine inside Snowflake.
@@ -59,11 +61,7 @@ To deploy and manage this infrastructure, ensure your local or CI/CD environment
 
 **AWS CLI (Configured):** Authenticated with appropriate IAM permissions (or via GitHub Actions OIDC secrets).
 
-**Snowflake Credentials:**
-
-    Access to an administrative role in your target account.
-
-    Account identifier and credentials (injected via CI/CD secrets for production).
+**Snowflake Credentials:** Access to an administrative role in your target account. Account identifier and credentials (injected via CI/CD secrets for production).
 
 **Python 3.11+:** Required for the Lambda and PySpark job development and linting.
 
