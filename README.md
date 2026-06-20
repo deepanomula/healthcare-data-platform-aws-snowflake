@@ -12,11 +12,6 @@ The platform implements a decoupled, three-tier data lake pattern optimized for 
 
 ```mermaid
 graph TD
-    %% Define Styles
-    classDef bronze fill:#f9f9f9,stroke:#b9770e,stroke-width:2px;
-    classDef compute fill:#e1f5fe,stroke:#2471a3,stroke-width:2px;
-    classDef snowflake fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
-
     subgraph AWS_INGEST [Bronze Tier: High-Throughput Ingestion]
         A[S3 Bucket: CSV/Parquet] -->|S3 Event| B(SQS Standard Queue)
         B --> C{Router Lambda}
