@@ -40,7 +40,7 @@ resource "aws_sqs_queue" "ingestion_dlq" {
 
 resource "aws_sqs_queue" "ingestion_queue" {
   name                        = "university-vitals-ingestion-queue.fifo"
-  fifo_queue                  = true
+  fifo_queue                  = false
   content_based_deduplication = true
   visibility_timeout_seconds  = 300 
 
