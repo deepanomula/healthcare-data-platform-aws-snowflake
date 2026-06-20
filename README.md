@@ -40,6 +40,26 @@ graph TD
 ```
 ----
 
+### 🛠️ System Prerequisites
+
+To deploy and manage this infrastructure, ensure your local or CI/CD environment has the following configurations:
+
+**Terraform v1.5.0+:** Required to manage the modular infrastructure-as-code state.
+
+**AWS CLI (Configured):** Authenticated with appropriate IAM permissions (or via GitHub Actions OIDC secrets).
+
+**Snowflake Credentials:**
+
+    Access to an administrative role in your target account.
+
+    Account identifier and credentials (injected via CI/CD secrets for production).
+
+**Python 3.11+:** Required for the Lambda and PySpark job development and linting.
+
+**State Management:** Access to the configured university-vitals-tf-state-bucket (for remote state locking).
+
+------
+
 ### 🧠 Core Engineering Design Patterns
 
 1. **Dynamic Compute Routing:** To balance execution velocity against cloud expenditure, a lightweight "Traffic Cop" Lambda inspects incoming file payloads.
@@ -60,7 +80,7 @@ graph TD
 
 ---
 
-## 📂 Repository Structure
+### 📂 Repository Structure
 
 ```text
 healthcare-data-platform-aws-snowflake/
@@ -79,5 +99,10 @@ healthcare-data-platform-aws-snowflake/
 │   └── glue/
 │       └── glue_spark_job.py        # Scale-out PySpark transformation script
 ├── snowflake/                       # Enterprise Warehousing Tier
-│   └── setup_warehouse_scdtype2.sql # Streams, tasks, clustering, and CDC architecture
+│   └── setup_warehouse_scdtype2.sql # Streams, tasks, clustering, and CDC
+├── tests/
+|   ├── __init__.py       
+│   ├── test_crypto_logic.py         # Validates HMAC hashing consistency
+|   └── test_s3_orchestration.py     # Validates S3 event processing logic
+architecture
 └── README.md
