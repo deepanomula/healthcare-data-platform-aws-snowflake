@@ -30,12 +30,11 @@ resource "aws_s3_bucket" "config_bucket" {
 }
 
 # =====================================================================
-# 2. INGESTION SHOCK-ABSORBER: SQS FIFO TIERS
+# 2. INGESTION SHOCK-ABSORBER: SQS TIERS
 # =====================================================================
 resource "aws_sqs_queue" "ingestion_dlq" {
-  name                        = "university-vitals-ingestion-queue-dlq.fifo"
-  fifo_queue                  = true
-  content_based_deduplication = true
+  name                        = "university-vitals-ingestion-queue-dlq"
+  fifo_queue                  = false
 }
 
 resource "aws_sqs_queue" "ingestion_queue" {
@@ -113,7 +112,7 @@ resource "aws_lambda_function" "transformer_lambda" {
   handler       = "lambda_function.lambda_handler"
   runtime       = "python3.11"
   timeout       = 300 
-  reserved_concurrent_executions = 10
+#  reserved_concurrent_executions = 10
 
   environment {
     variables = {
