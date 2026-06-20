@@ -12,46 +12,56 @@ The platform implements a decoupled, three-tier data lake pattern optimized for 
 
 ```mermaid
 graph TD
-    %% Styling Configuration
-    classDef bronze fill:#b9770e,stroke:#333,stroke-width:2px,color:#fff;
-    classDef router fill:#2471a3,stroke:#333,stroke-width:2px,color:#fff;
-    classDef silver fill:#7d6608,stroke:#333,stroke-width:2px,color:#fff;
-    classDef gold fill:#d4ac0d,stroke:#333,stroke-width:2px,color:#111;
+    %% Define Styles
+    classDef bronze fill:#f9f9f9,stroke:#b9770e,stroke-width:2px;
+    classDef compute fill:#e1f5fe,stroke:#2471a3,stroke-width:2px;
+    classDef snowflake fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
 
-    subgraph BRONZE_TIER [1. Bronze Ingestion Tier]
-        A[Multi-Vendor Files<br>CSV / XML Drops] --> B(S3 Ingestion Bucket<br>Bronze Data Lake)
-        B -->|S3 Event Notification| C[AWS SQS FIFO Queue<br>Ingestion Throttle]
+    subgraph AWS_INGEST [Bronze Tier: High-Throughput Ingestion]
+        A[S3 Bucket: CSV/Parquet] -->|S3 Event| B(SQS Standard Queue)
+        B --> C{Router Lambda}
     end
-    class B,C bronze;
 
-    subgraph COMPUTE_ROUTER [2. Dynamic Compute Router Gate]
-        C --> D{Router Lambda Cop<br>Inspects File Size}
-        D -->|< 50MB| E[Transformer Lambda<br>Serverless Compute]
-        D -->|≥ 50MB or .xml| F[AWS Glue Spark Job<br>Distributed Cluster]
+    subgraph AWS_COMPUTE [Processing Tier]
+        C -->| < 50MB | D[Transformer Lambda]
+        C -->| >= 50MB | E[AWS Glue Job]
+        D --> F[S3 Bucket: Silver/Parquet]
+        E --> F
     end
-    class D,E,F router;
 
-    subgraph SILVER_TIER [3. Silver Storage Tier]
-        E -->|Salted HMAC-SHA256 Masking| G(S3 Optimized Storage<br>Silver Lake: Parquet)
-        F -->|Salted HMAC-SHA256 Masking| G
-        G -->|Automated Snowpipe| H[(Snowflake Staging<br>Append-Only Table)]
+    subgraph SNOWFLAKE [Gold Tier: CDC & Warehousing]
+        F -->|Pipe 1: CSV| G[Snowpipe CSV]
+        F -->|Pipe 2: Parquet| H[Snowpipe Parquet]
+        G --> I[(Staging Table)]
+        H --> I
+        I --> J[Snowflake Stream]
+        J --> K[Snowflake Task: MERGE]
+        K --> L[(CLINICAL_GOLD Table)]
     end
-    class G,H silver;
 
-    subgraph GOLD_WAREHOUSE [4. Change Data Capture Gold Warehouse]
-        H -->|Continuous CDC| I[Snowflake Data Stream<br>Transaction Bookmark]
-        I -->|CRON Trigger Condition| J{Snowflake Task<br>Windowed Deduplication}
-        J -->|Idempotent MERGE| K[(CLINICAL_GOLD<br>FACT_PATIENT_VITALS)]
-    end
-    class I,J,K gold;
+    class A,B bronze;
+    class C,D,E,F compute;
+    class G,H,I,J,K,L snowflake;
 ```
 ----
 
 ### 🧠 Core Engineering Design Patterns
 
-1. **Dynamic Compute Routing:** To balance execution velocity against cloud expenditure, a lightweight traffic cop Lambda inspects file payloads streaming from an **SQS FIFO Queue**. Micro-batches under 50MB bypass heavy infrastructure and invoke an asynchronous, serverless Lambda execution tier. Payload files exceeding 50MB or requiring nested schema parsing (.xml) are routed to auto-scaling **AWS Glue (PySpark)** clusters to avoid execution timeouts.
-2. **Cryptographic PHI Governance:** To ensure HIPAA alignment, sensitive patient cleartext identifiers (`patient_id`) are intercepted at the cloud compute boundary. A deterministic hash is generated using **HMAC SHA-256** combined with a secret, rotating organizational salt token. This eliminates the storage of raw protected health information while preserving relational join integrity across analytical pipelines.
-3. **Idempotent Storage Strategy:** Concurrent network file drops can introduce duplicated transaction boundaries. To enforce absolute database idempotency, data is loaded via Snowpipe into an append-only staging table. A reactive Snowflake **Stream** acts as a micro-batch cursor tracking updates. An automated Snowflake **Task** uses windowed deduplication partition passes (`QUALIFY ROW_NUMBER()`) and updates the production Gold tier via an atomic atomic table `MERGE`.
+1. **Dynamic Compute Routing:** To balance execution velocity against cloud expenditure, a lightweight "Traffic Cop" Lambda inspects incoming file payloads.
+
+    **Synchronous (Lambda):** Lightweight files (< 50MB) are processed by Lambda, which maintains a synchronous lifecycle with SQS—deleting the message only upon successful transformation.
+
+    **Asynchronous (Glue):** Large files or complex XML formats trigger AWS Glue jobs. This asynchronous handoff allows the pipeline to scale horizontally for heavy-duty computation.
+
+2. **Standardized Ingestion:** By utilizing AWS SQS Standard Queues, the platform achieves near-unlimited throughput and native S3 event compatibility, supporting high-concurrency ingestion.
+
+3. **Dual-Path Snowpipe Ingestion:** Data is routed through two dedicated Snowpipe interfaces:
+
+    **CSV Path:** Optimized for structured, flat-file health records.
+
+    **Parquet Path:** Optimized for schema-on-read analytical ingestion.
+
+4. **Idempotent Storage Strategy:** To handle the "at-least-once" delivery of Standard SQS, the system employs an atomic MERGE strategy in Snowflake. An automated Stream acts as a transaction bookmark, and a scheduled Task (using SYSTEM$STREAM_HAS_DATA) ensures compute resources are only utilized when new data is present.
 
 ---
 
@@ -60,18 +70,19 @@ graph TD
 ```text
 healthcare-data-platform-aws-snowflake/
 ├── .github/workflows/
-│   └── ci-cd-pipeline.yml     # CI/CD: Automated Python linters & PyTest suites
-├── terraform/                  # Infrastructure as Code (IaC) Tier
-│   ├── main.tf                 # Core cloud network and permission architectures
-│   ├── variables.tf            # Environment input mappings
-│   └── providers.tf            # State-locking configuration blocks
-├── src/                        # Compute Application Tier
+│   └── ci-cd-pipeline.yml           # CI/CD: Automated Python linters & PyTest suites
+├── terraform/
+|   ├── main.tf                      # General AWS Resources (IAM, SQS, S3, Lambda)
+|   ├── snowflake.tf                 # Snowflake Provider & Resource definitions
+|   ├── variables.tf                 # Shared variables
+|   └── providers.tf                 # Backend + Provider configurations
+├── src/                             # Compute Application Tier
 │   ├── lambda/
-│   │   ├── router_handler.py   # Traffic cop file size inspector
-│   │   ├── lambda_function.py  # Lightweight Parquet processing module
-│   │   └── test_lambda.py      # Deterministic validation and testing blocks
+│   │   ├── router_handler.py        # Traffic cop file size inspector
+│   │   ├── lambda_function.py       # Lightweight Parquet processing module
+│   │   └── test_lambda.py           # Deterministic validation and testing blocks
 │   └── glue/
-│       └── glue_spark_job.py   # Scale-out PySpark transformation script
-├── snowflake/                  # Enterprise Warehousing Tier
-│   └── setup_warehouse.sql     # Streams, tasks, clustering, and CDC architecture
+│       └── glue_spark_job.py        # Scale-out PySpark transformation script
+├── snowflake/                       # Enterprise Warehousing Tier
+│   └── setup_warehouse_scdtype2.sql # Streams, tasks, clustering, and CDC architecture
 └── README.md
